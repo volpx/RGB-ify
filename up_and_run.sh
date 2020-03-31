@@ -6,15 +6,28 @@ set -e
 
 REMOTE=$REMOTE_USER@$REMOTE_ADDRESS
 
+up(){
 
-echo "Building..."
+	echo "Building..."
+	make all
 
-echo make all
-aarch64-linux-gnu-gcc RGB-ify.cpp -o build/RGB-ify
+	echo "Loading to home server..."
+	scp build/RGB-ify $REMOTE:~/RGB-ify/build/RGB-ify
+	scp run_the_baracca.sh $REMOTE:~/RGB-ify/run_the_baracca.sh
+	scp server.conf $REMOTE:~/RGB-ify/server.conf
+}
 
-echo "Loading to home server..."
+run(){
+	echo "Running..."
+	ssh $REMOTE "~/bin/RGB-ify"
+}
 
-ssh $REMOTE "mkdir -p ~/bin"
-scp build/RGB-ify $REMOTE:~/bin/RGB-ify
-ssh $REMOTE "chmod +x ~/bin/RGB-ify && ~/bin/RGB-ify /dev/spidev0.0"
+prepare(){
+	# TODO: add spidev overlay, write udev rule for spi, add user to spi group, reboot
+	ssh $REMOTE "mkdir -p ~/RGB-ify/build \
+	&& touch ~/RGB-ify/build/RGB-ify && chmod +x ~/RGB-ify/build/RGB-ify\
+	&& touch ~/RGB-ify/run_the_baracca.sh && chmod +x ~/RGB-ify/run_the_baracca.sh\
+	&& touch ~/RGB-ify/server.conf && chmod +x ~/RGB-ify/server.conf"
+}
 
+$1

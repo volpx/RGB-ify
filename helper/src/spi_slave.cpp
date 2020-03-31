@@ -10,23 +10,24 @@ void spi_init(){
     PRR&=~(1<<PRSPI);
     // set MISO and clock as output
     DDRB|=(1<<4);
-    // set pullup on my cs
-    PORTB|=(1<<PB2);
+    // set pullup on my cs, clock and input
+    PORTB|=(1<<PB2)|(1<<PB5)|(1<<PB3);
 
     // Enable SPI as a master and set clock
     SPCR = (1<<SPIE)|(1<<SPE)|(0<<DORD)
         |(0<<CPOL)|(0<<CPHA);
     
-    // Wait the end of programming, my CS must be high
-    while(!(PINB&(1<<PB2)));
-  
     for (uint8_t i=0;i<SPI_MEM;++i){
         spi_mem[i]=0;
     }
+    // Wait the end of programming, my CS must be high
+    while(!(PINB&(1<<PB2)));
+    // set ready
+    spi_reg|=(1<<SPI_REG_X_READY);
 }
 
 void spi_loop(){
-    if (!(spi_reg&SPI_X_READY)) {
+    if (!(spi_reg& (1<<SPI_REG_X_READY))) {
         // not finished yet but the transmission is pending
         // check if it's finished on the cs
         if (PORTB & (1<<PB2)){
@@ -39,7 +40,7 @@ void spi_loop(){
             // dummy data
             SPDR=0xFF;
             // set ready
-            spi_reg|=SPI_X_READY;
+//             spi_reg|=(1<<SPI_REG_X_READY);
         }
     }
 }
@@ -47,9 +48,12 @@ void spi_loop(){
 ISR(SPI_STC_vect){
     // slave operations
     uint8_t data=SPDR;
-    if (spi_reg & SPI_X_READY){
+//     if(data == 0xaa && spi_reg==0b00001110){
+//             LED_OFF();
+//     }
+    if (spi_reg & (1<<SPI_REG_X_READY)){
         // begin of transmission
-        spi_reg&=~SPI_X_READY;
+        spi_reg&=~(1<<SPI_REG_X_READY);
         
         // get the mem address
         spi_ind=SPI_ADDR_MASK&data;
@@ -59,28 +63,28 @@ ISR(SPI_STC_vect){
         
         // check W / AUTOINC
         if(data & SPI_AUTOINC){
-            spi_reg|=SPI_REG_AUTOINC;
+            spi_reg|=(1<<SPI_REG_AUTOINC);
         }
         else{
-            spi_reg&=~SPI_REG_AUTOINC;
+            spi_reg&=~(1<<SPI_REG_AUTOINC);
         }
         
         if(data & SPI_W){
             // write
-            spi_reg|=SPI_REG_W;
+            spi_reg|=(1<<SPI_REG_W);
             // don't need for now
             data=0xFF;
         }
         else{
             // read
-            spi_reg&=~SPI_REG_W;
+            spi_reg&=~(1<<SPI_REG_W);
             // here load the next byte to send out
             data=0xFF;
         }
     }
     else{
         // ongoing transmission
-        if (spi_reg & SPI_REG_W){
+        if (spi_reg & (1<<SPI_REG_W)){
             // write stuff
 
             // save the data in the memory
@@ -91,9 +95,12 @@ ISR(SPI_STC_vect){
             data=0xFF;
         }
         
-        if (spi_reg & SPI_REG_AUTOINC){
+        if (spi_reg & (1<<SPI_REG_AUTOINC)){
             // advance the address
             ++spi_ind;
+            if(spi_ind==4){
+                spi_reg|=(1<<SPI_REG_X_READY);
+            }
         }
     }
     // load next data

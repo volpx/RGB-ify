@@ -5,12 +5,13 @@ int main(void){
 	util_init();
 	time_init();
     spi_init();
+    sei();
     
     LED_ON();
     
-    PWM_RED=255;
-    PWM_GREEN=255;
-    PWM_BLUE=255;
+    PWM_RED=0;
+    PWM_GREEN=0;
+    PWM_BLUE=0;
     
 
 	while(1){

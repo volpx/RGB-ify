@@ -142,7 +142,7 @@ hex:
 	${OBJCOPY} -j .text -j .data -O ihex $(BUILD_DIR)/$(PROJECT).elf $(BUILD_DIR)/${TARGET}.hex
 
 flash:
-	avrdude -p $(MCU_ID) -c arduino -P /dev/ttyUSB0 -C avrdude.conf -b 57600 -D -U flash:w:$(BUILD_DIR)/$(TARGET).hex:i -v
+	avrdude -p $(MCU_ID) -c arduino -P /dev/ttyUSB1 -C avrdude.conf -b 57600 -D -U flash:w:$(BUILD_DIR)/$(TARGET).hex:i -v
 
 clean:
 	rm -rf $(BUILD_DIR) || true
