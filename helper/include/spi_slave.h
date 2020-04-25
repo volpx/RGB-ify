@@ -26,7 +26,7 @@ extern uint8_t spi_mem[SPI_MEM];
 
 // reg description
 extern volatile uint8_t spi_reg;
-//#define SPI_UPDATE      0
+#define SPI_UPDATE      0
 #define SPI_REG_X_READY     1
 #define SPI_REG_AUTOINC 2
 #define SPI_REG_W       3

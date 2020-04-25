@@ -16,7 +16,7 @@ void spi_init(){
     // Enable SPI as a master and set clock
     SPCR = (1<<SPIE)|(1<<SPE)|(0<<DORD)
         |(0<<CPOL)|(0<<CPHA);
-    
+
     for (uint8_t i=0;i<SPI_MEM;++i){
         spi_mem[i]=0;
     }
@@ -27,21 +27,16 @@ void spi_init(){
 }
 
 void spi_loop(){
-    if (!(spi_reg& (1<<SPI_REG_X_READY))) {
-        // not finished yet but the transmission is pending
-        // check if it's finished on the cs
-        if (PORTB & (1<<PB2)){
-            // CS is high ==> transmission finished
-            // so there's an update in the spi mem
-            PWM_RED=spi_mem[1];
-            PWM_GREEN=spi_mem[2];
-            PWM_BLUE=spi_mem[3];
-            
-            // dummy data
-            SPDR=0xFF;
-            // set ready
-//             spi_reg|=(1<<SPI_REG_X_READY);
-        }
+    if ((spi_reg& (1<<SPI_UPDATE))) {
+		// so there's an update in the spi mem
+		PWM_RED=spi_mem[1];
+		PWM_GREEN=spi_mem[2];
+		PWM_BLUE=spi_mem[3];
+
+		// dummy data
+		SPDR=0xFF;
+		// set no more update
+		spi_reg&=~(1<<SPI_UPDATE);
     }
 }
 
@@ -54,13 +49,13 @@ ISR(SPI_STC_vect){
     if (spi_reg & (1<<SPI_REG_X_READY)){
         // begin of transmission
         spi_reg&=~(1<<SPI_REG_X_READY);
-        
+
         // get the mem address
         spi_ind=SPI_ADDR_MASK&data;
         if(spi_ind>=SPI_MEM){
             spi_ind=0;
         }
-        
+
         // check W / AUTOINC
         if(data & SPI_AUTOINC){
             spi_reg|=(1<<SPI_REG_AUTOINC);
@@ -68,7 +63,7 @@ ISR(SPI_STC_vect){
         else{
             spi_reg&=~(1<<SPI_REG_AUTOINC);
         }
-        
+
         if(data & SPI_W){
             // write
             spi_reg|=(1<<SPI_REG_W);
@@ -94,12 +89,13 @@ ISR(SPI_STC_vect){
             // read stuff
             data=0xFF;
         }
-        
+
         if (spi_reg & (1<<SPI_REG_AUTOINC)){
             // advance the address
             ++spi_ind;
-            if(spi_ind==4){
-                spi_reg|=(1<<SPI_REG_X_READY);
+            if(spi_ind>=SPI_MEM){
+				// end of transmission
+                spi_reg|=(1<<SPI_REG_X_READY)|(1<<SPI_UPDATE);
             }
         }
     }
