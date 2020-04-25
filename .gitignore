@@ -1,6 +1,7 @@
 build/
 /server.conf
 docs/
+/rgbify_m/
 
 # editor forlders
 # .vscode/
