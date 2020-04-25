@@ -8,10 +8,10 @@ REMOTE=$REMOTE_USER@$REMOTE_ADDRESS
 
 up(){
 
-	echo "Building..."
-	make all
+	echo -ne "\nBuilding...\n"
+	make
 
-	echo "Loading to home server..."
+	echo -ne "\nLoading to home server...\n"
 	scp build/RGB-ify $REMOTE:~/RGB-ify/build/RGB-ify
 	scp run_the_baracca.sh $REMOTE:~/RGB-ify/run_the_baracca.sh
 	scp server.conf $REMOTE:~/RGB-ify/server.conf

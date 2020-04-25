@@ -1,0 +1,17 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "defines": [],
+            "includePath": [
+                "${default}",
+                "${workspaceFolder}/include"
+            ]
+        },
+        {
+            "name": "Arm cross compiler",
+            "defines": []
+        }
+    ],
+    "version": 4
+}
